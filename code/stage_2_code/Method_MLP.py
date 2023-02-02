@@ -10,7 +10,8 @@ from code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
-
+#import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_fscore_support
 
 class Method_MLP(method, nn.Module):
     data = None
@@ -56,6 +57,10 @@ class Method_MLP(method, nn.Module):
     # so we don't need to define the error backpropagation function here
 
     def train(self, X, y):
+        # e = []
+        # l = []
+        y_predArr = []
+        y_trueArr = []
         # check here for the torch.optim doc: https://pytorch.org/docs/stable/optim.html
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         # check here for the nn.CrossEntropyLoss doc: https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
@@ -71,7 +76,9 @@ class Method_MLP(method, nn.Module):
             y_pred = self.forward(torch.FloatTensor(np.array(X)))
             # convert y to torch.tensor as well
             y_true = torch.LongTensor(np.array(y))
-            # calculate the training loss
+            y_predArr.append(y_pred)
+            y_trueArr.append(y_true)
+            # caculate the training loss
             train_loss = loss_function(y_pred, y_true)
 
             # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
@@ -86,10 +93,15 @@ class Method_MLP(method, nn.Module):
             if epoch%100 == 0:
                 accuracy_evaluator.data = {'true_y': y_true, 'pred_y': y_pred.max(1)[1]}
                 print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item())
+                # e.append(epoch)
+                # l.append(train_loss.item())
 
 
                 self.epochToAccuracy[epoch] = accuracy_evaluator.evaluate()
-    
+        print("HERE ARE THE P, R, F, S values")
+        print(precision_recall_fscore_support(y_trueArr, y_predArr, average='weighted'))
+
+
     def test(self, X):
         # do the testing, and result the result
         y_pred = self.forward(torch.FloatTensor(np.array(X)))

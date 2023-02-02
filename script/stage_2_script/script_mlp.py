@@ -7,6 +7,8 @@ from code.stage_2_code.Setting_Train_Test_Split import Setting_Train_Test_Split
 from code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import numpy as np
 import torch
+from sklearn.metrics import f1_score
+#import matplotlib.pyplot as plt
 
 #---- Multi-Layer Perceptron script ----
 if 1:
