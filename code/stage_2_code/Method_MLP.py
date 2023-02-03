@@ -10,6 +10,7 @@ from code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import torch
 from torch import nn
 import numpy as np
+from sklearn.metrics import precision_score, f1_score, recall_score
 
 
 class Method_MLP(method, nn.Module):
@@ -36,6 +37,7 @@ class Method_MLP(method, nn.Module):
         self.fc_layer_3 = nn.Linear(128, 10)
         # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_3 = nn.ReLU()
+
 
 
 
@@ -66,7 +68,9 @@ class Method_MLP(method, nn.Module):
         loss_function = nn.CrossEntropyLoss()
         # for training accuracy investigation purpose
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
-
+        f1 = []
+        precision = []
+        recall = []
         # it will be an iterative gradient updating process
         # we don't do mini-batch, we use the whole input as one batch
         # you can try to split X and y into smaller-sized batches by yourself
@@ -77,6 +81,10 @@ class Method_MLP(method, nn.Module):
             y_true = torch.LongTensor(np.array(y))
             # calculate the training loss
             train_loss = loss_function(y_pred, y_true)
+
+            f1.append(f1_score(y_true, y_pred.max(1)[1], average="weighted"))
+            precision.append(precision_score(y_true, y_pred.max(1)[1], average="weighted", zero_division=0))
+            recall.append(recall_score(y_true, y_pred.max(1)[1],average="weighted", zero_division=0))
 
             # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
             optimizer.zero_grad()
