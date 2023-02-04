@@ -30,15 +30,15 @@ class Method_MLP(method, nn.Module):
         self.fc_layer_1 = nn.Linear(784, 256)
         # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_1 = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(256, 128)
+        self.fc_layer_2 = nn.Linear(256, 10)
         # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_2 = nn.ReLU()
 
-        self.fc_layer_3 = nn.Linear(128, 10)
-        # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
-        self.activation_func_3 = nn.ReLU()
 
 
+        self.f1 = []
+        self.precision = []
+        self.recall = []
 
 
         # TEMP
@@ -68,9 +68,6 @@ class Method_MLP(method, nn.Module):
         loss_function = nn.CrossEntropyLoss()
         # for training accuracy investigation purpose
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
-        f1 = []
-        precision = []
-        recall = []
         # it will be an iterative gradient updating process
         # we don't do mini-batch, we use the whole input as one batch
         # you can try to split X and y into smaller-sized batches by yourself
@@ -82,9 +79,9 @@ class Method_MLP(method, nn.Module):
             # calculate the training loss
             train_loss = loss_function(y_pred, y_true)
 
-            f1.append(f1_score(y_true, y_pred.max(1)[1], average="weighted"))
-            precision.append(precision_score(y_true, y_pred.max(1)[1], average="weighted", zero_division=0))
-            recall.append(recall_score(y_true, y_pred.max(1)[1],average="weighted", zero_division=0))
+            self.f1.append(f1_score(y_true, y_pred.max(1)[1], average="weighted"))
+            self.precision.append(precision_score(y_true, y_pred.max(1)[1], average="weighted", zero_division=0))
+            self.recall.append(recall_score(y_true, y_pred.max(1)[1],average="weighted", zero_division=0))
 
             # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
             optimizer.zero_grad()
@@ -98,7 +95,6 @@ class Method_MLP(method, nn.Module):
             if epoch%100 == 0:
                 accuracy_evaluator.data = {'true_y': y_true, 'pred_y': y_pred.max(1)[1]}
                 print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item())
-
 
                 self.epochToAccuracy[epoch] = accuracy_evaluator.evaluate()
     
@@ -115,5 +111,10 @@ class Method_MLP(method, nn.Module):
         self.train(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
+
+        print("f1: ", np.average(self.f1))
+        print("precision: ", np.average(self.precision))
+        print("recall: ", np.average(self.recall))
+
         return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
             

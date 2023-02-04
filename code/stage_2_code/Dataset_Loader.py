@@ -28,10 +28,6 @@ class Dataset_Loader(dataset):
             X.append(elements[1:])
             y.append(elements[0])
 
-            # c += 1
-            # if c == 1000:
-            #     break
-
         f.close()
 
         XTest = []
