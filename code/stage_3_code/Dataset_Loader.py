@@ -21,28 +21,10 @@ class Dataset_Loader(dataset):
         X = []
         y = []
         f = open(self.dataset_source_folder_path + self.dataset_source_file_name, 'r')
-        c = 0
         for line in f:
             line = line.strip('\n')
-            elements = [int(i) for i in line.split(',')]
-            X.append(elements[1:])
-            y.append(elements[0])
-            c += 1
-            if c == 1000:
-                break
-
+            elements = [int(i) for i in line.split(' ')]
+            X.append(elements[:-1])
+            y.append(elements[-1])
         f.close()
-
-        XTest = []
-        yTest = []
-
-        f = open(self.dataset_source_folder_path + "test.csv", 'r')
-        for line in f:
-            line = line.strip('\n')
-            elements = [int(i) for i in line.split(',')]
-            XTest.append(elements[1:])
-            yTest.append(elements[0])
-        f.close()
-
-
-        return {'X': X, 'y': y}, {'X': XTest, 'y': yTest}
+        return {'X': X, 'y': y}
