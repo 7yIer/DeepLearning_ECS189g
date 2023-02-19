@@ -15,6 +15,8 @@ class MyDataset(Dataset):
 
     def __len__(self):
         return len(self.images)
+    def __repr__(self):
+        return str(tuple((self.images, self.labels)))
 
     def __getitem__(self, idx):
         return self.images[idx], self.labels[idx]
