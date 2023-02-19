@@ -20,6 +20,8 @@ if 1:
     data_obj.dataset_source_folder_path = '../../data/stage_2_data/'
     data_obj.dataset_source_file_name = 'train.csv'
 
+
+
     method_obj = Method_MLP('multi-layer perceptron', '')
 
     result_obj = Result_Saver('saver', '')
@@ -37,11 +39,11 @@ if 1:
     print('************ Start ************')
     setting_obj.prepare(data_obj, method_obj, result_obj, evaluate_obj)
     setting_obj.print_setup_summary()
+    setting_obj.load_run_save_evaluate()
     mean_score, std_score = setting_obj.load_run_save_evaluate()
     print('************ Overall Performance ************')
     print('MLP Accuracy: ' + str(mean_score) + ' +/- ' + str(std_score))
     print('************ Finish ************')
     # ------------------------------------------------------
-    
 
     

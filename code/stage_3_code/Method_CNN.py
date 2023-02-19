@@ -69,33 +69,13 @@ class Method_CNN(method, nn.Module):
             # convert y to torch.tensor as well
             y_true = torch.LongTensor(np.array(y))
             # calculate the training loss
-            train_loss = loss_function(y_pred, y_true)
 
-            # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
-            optimizer.zero_grad()
-            # check here for the loss.backward doc: https://pytorch.org/docs/stable/generated/torch.Tensor.backward.html
-            # do the error backpropagation to calculate the gradients
-            train_loss.backward()
-            # check here for the opti.step doc: https://pytorch.org/docs/stable/optim.html
-            # update the variables according to the optimizer and the gradients calculated by the above loss.backward function
-            optimizer.step()
+        def run(self):
+            print('method running...')
+            print('--start training...')
+            self.train(self.data['train']['X'], self.data['train']['y'])
+            print('--start testing...')
+            pred_y = self.test(self.data['test']['X'])
+            return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
 
-            if epoch%100 == 0:
-                accuracy_evaluator.data = {'true_y': y_true, 'pred_y': y_pred.max(1)[1]}
-                print('Epoch:', epoch, 'Accuracy:', accuracy_evaluator.evaluate(), 'Loss:', train_loss.item())
 
-    def test(self, X):
-        # do the testing, and result the result
-        y_pred = self.forward(torch.FloatTensor(np.array(X)))
-        # convert the probability distributions to the corresponding labels
-        # instances will get the labels corresponding to the largest probability
-        return y_pred.max(1)[1]
-
-    def run(self):
-        print('method running...')
-        print('--start training...')
-        self.train(self.data['train']['X'], self.data['train']['y'])
-        print('--start testing...')
-        pred_y = self.test(self.data['test']['X'])
-        return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
-            
