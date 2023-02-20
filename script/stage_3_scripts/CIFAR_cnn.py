@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import numpy as np
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
 class MyDataset(Dataset):
@@ -86,19 +87,30 @@ for epoch in range(100): # number of epochs
 
 print('Finished training')
 
-def test(cnn, test_dataloader):
-    cnn.eval()  # set the model to evaluation mode
-    with torch.no_grad():  # turn off gradient computation for efficiency
-        correct = 0
-        total = 0
-        for data in test_dataloader:
-            inputs, labels = data
-            outputs = cnn(inputs.float())  # feed the input to the model to get predictions
-            _, predicted = torch.max(outputs.data, 1)  # get the index of the class with the highest probability
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()  # count the number of correct predictions
-    acc = 100 * correct / total  # calculate the accuracy as a percentage
-    print('Accuracy on test set: {:.2f}%'.format(acc))
-    return acc
+all_predictions = []
+all_labels = []
 
-test(cnn, test_dataloader)
+cnn.eval()  # set the model to evaluation mode
+with torch.no_grad():  # turn off gradient computation for efficiency
+    correct = 0
+    total = 0
+    for data in test_dataloader:
+        inputs, labels = data
+        outputs = cnn(inputs.float())  # feed the input to the model to get predictions
+        _, predicted = torch.max(outputs.data, 1)  # get the index of the class with the highest probability
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()  # count the number of correct predictions
+        all_predictions.extend(predicted.tolist())
+        all_labels.extend(labels.tolist())
+acc = 100 * correct / total  # calculate the accuracy as a percentage
+print('Accuracy on test set: {:.2f}%'.format(acc))
+all_predictions = np.array(all_predictions)
+all_labels = np.array(all_labels)
+accuracy = accuracy_score(all_labels, all_predictions) * 100
+precision = precision_score(all_labels, all_predictions, average='weighted')
+recall = recall_score(all_labels, all_predictions, average='weighted')
+f1_score = f1_score(all_labels, all_predictions, average='weighted')
+
+print("Precision: {:.2f}".format(precision))
+print("Recall: {:.2f}".format(recall))
+print("F1-score: {:.2f}".format(f1_score))
