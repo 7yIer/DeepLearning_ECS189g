@@ -45,7 +45,7 @@ class MyDataset(dataset):
 def main():
     if 1:
 
-        dataset_type = "CIFAR"
+        dataset_type = "ORL"
         with open('../../data/stage_3_data/' + dataset_type, 'rb') as f:
             data = pickle.load(f)
 
