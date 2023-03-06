@@ -13,9 +13,7 @@ class MyDataset(Dataset):
         self.images = []
         self.labels = []
         for item in data:
-            img = Image.fromarray(item['image']).convert('L')  # convert to grayscale
-            img_tensor = torch.Tensor(np.array(img)).unsqueeze(0)
-            self.images.append(img_tensor)
+            self.images.append(item['image'])
             self.labels.append(item['label'])
 
     def __len__(self):
@@ -26,43 +24,40 @@ class MyDataset(Dataset):
 
 
 class ORLNet(nn.Module):
-
     def __init__(self):
         super(ORLNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3)
-        self.pool1 = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, 3)
-        self.pool2 = nn.MaxPool2d(2, 2)
-        self.conv3 = nn.Conv2d(64, 128, 3)
-        self.pool3 = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(128 * 2 * 2, 512)
-        self.fc2 = nn.Linear(512, 10)
+        self.conv1 = nn.Conv2d(3, 32, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 64, 5)
+        self.fc1 = nn.Linear(64 * 5 * 5, 1024)
+        self.fc2 = nn.Linear(1024, 10)
 
     def forward(self, x):
-        x = self.pool1(nn.functional.relu(self.conv1(x)))
-        x = self.pool2(nn.functional.relu(self.conv2(x)))
-        x = self.pool3(nn.functional.relu(self.conv3(x)))
-        x = x.view(-1, 128 * 2 * 2)
+        x = x.permute(0, 3, 2, 1)
+        x = self.pool(nn.functional.relu(self.conv1(x)))
+        x = self.pool(nn.functional.relu(self.conv2(x)))
+        x = x.view(-1, 64 * 5 * 5)
         x = nn.functional.relu(self.fc1(x))
         x = self.fc2(x)
         return x
 
 
-with open('../../data/stage_3_data/ORL', 'rb') as f:
+with open('../../data/stage_3_data/CIFAR', 'rb') as f:
     data = pickle.load(f)
 
 train_dataset = MyDataset(data['train'])
 test_dataset = MyDataset(data['test'])
 
-train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_dataloader = DataLoader(test_dataset, batch_size=40, shuffle=False)
+train_dataloader = DataLoader(train_dataset, batch_size=360, shuffle=True) #50,000
+test_dataloader = DataLoader(test_dataset, batch_size=40, shuffle=False) #10,000
 
 
 cnn = ORLNet()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(cnn.parameters(), lr=0.001)
 
-for epoch in range(100):
+
+for epoch in range(25): # number of epochs
     running_loss = 0.0
     for i, data in enumerate(train_dataloader, 0):
         inputs, labels = data
@@ -92,10 +87,9 @@ for epoch in range(100):
 
 print('Finished training')
 
-
-
 all_predictions = []
 all_labels = []
+
 cnn.eval()  # set the model to evaluation mode
 with torch.no_grad():  # turn off gradient computation for efficiency
     correct = 0
@@ -106,13 +100,9 @@ with torch.no_grad():  # turn off gradient computation for efficiency
         _, predicted = torch.max(outputs.data, 1)  # get the index of the class with the highest probability
         total += labels.size(0)
         correct += (predicted == labels).sum().item()  # count the number of correct predictions
-
         all_predictions.extend(predicted.tolist())
         all_labels.extend(labels.tolist())
-
 acc = 100 * correct / total  # calculate the accuracy as a percentage
-
-
 print('Accuracy on test set: {:.2f}%'.format(acc))
 all_predictions = np.array(all_predictions)
 all_labels = np.array(all_labels)

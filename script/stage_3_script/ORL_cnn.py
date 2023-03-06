@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import numpy as np
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
 class MyDataset(Dataset):
@@ -25,30 +26,29 @@ class MyDataset(Dataset):
 
 
 class ORLNet(nn.Module):
-    def __init__(self):
-        super(ORLNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, 5)
-        self.fc1 = nn.Linear(64 * 25 * 20, 1024)
-        self.fc2 = nn.Linear(1024, 41)
+        def __init__(self):
+            super(ORLNet, self).__init__()
+            self.conv1 = nn.Conv2d(1, 16, 3)
+            self.pool = nn.MaxPool2d(2, 2)
+            self.conv2 = nn.Conv2d(16, 32, 3)
+            self.fc1 = nn.Linear(32 * 26 * 21, 128)
+            self.fc2 = nn.Linear(128, 41)
 
-    def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 64 * 25 * 20)
-        x = nn.functional.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-
+        def forward(self, x):
+            x = self.pool(nn.functional.relu(self.conv1(x)))
+            x = self.pool(nn.functional.relu(self.conv2(x)))
+            print(x.shape)
+            x = x.view(-1, 32 * 26 * 21)
+            x = nn.functional.relu(self.fc1(x))
+            x = self.fc2(x)
+            return x
 with open('../../data/stage_3_data/ORL', 'rb') as f:
     data = pickle.load(f)
 
 train_dataset = MyDataset(data['train'])
 test_dataset = MyDataset(data['test'])
 
-train_dataloader = DataLoader(train_dataset, batch_size=364, shuffle=True)
+train_dataloader = DataLoader(train_dataset, batch_size=360, shuffle=True)
 test_dataloader = DataLoader(test_dataset, batch_size=40, shuffle=False)
 
 
@@ -85,6 +85,11 @@ for epoch in range(100):
             # print results
 
 print('Finished training')
+
+
+
+all_predictions = []
+all_labels = []
 cnn.eval()  # set the model to evaluation mode
 with torch.no_grad():  # turn off gradient computation for efficiency
     correct = 0
@@ -95,6 +100,21 @@ with torch.no_grad():  # turn off gradient computation for efficiency
         _, predicted = torch.max(outputs.data, 1)  # get the index of the class with the highest probability
         total += labels.size(0)
         correct += (predicted == labels).sum().item()  # count the number of correct predictions
+
+        all_predictions.extend(predicted.tolist())
+        all_labels.extend(labels.tolist())
+
 acc = 100 * correct / total  # calculate the accuracy as a percentage
+
+
 print('Accuracy on test set: {:.2f}%'.format(acc))
-    #return acc
+all_predictions = np.array(all_predictions)
+all_labels = np.array(all_labels)
+accuracy = accuracy_score(all_labels, all_predictions) * 100
+precision = precision_score(all_labels, all_predictions, average='weighted')
+recall = recall_score(all_labels, all_predictions, average='weighted')
+f1_score = f1_score(all_labels, all_predictions, average='weighted')
+
+print("Precision: {:.2f}".format(precision))
+print("Recall: {:.2f}".format(recall))
+print("F1-score: {:.2f}".format(f1_score))
